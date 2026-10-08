@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:text="${isNew ? 'New Customer' : 'Edit Customer'} + ' - Smart Manufacturing'">Customer Form</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="mb-4">
+        <a th:href="@{/customers}" class="btn btn-sm btn-outline-secondary mb-2">&larr; Back to Directory</a>
+        <h3 class="fw-bold" th:text="${isNew ? 'Register New Industrial Client' : 'Edit Client Information'}">Customer Form</h3>
+    </div>
+
+    <div class="card shadow-sm border-0" style="max-width: 800px;">
+        <div class="card-body p-4">
+            <form th:action="@{/customers/save}" th:object="${customerDto}" method="post">
+                <input type="hidden" th:field="*{id}">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="customerCode" class="form-label fw-semibold">Customer Code / ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="customerCode" th:field="*{customerCode}"
+                               th:classappend="${#fields.hasErrors('customerCode')} ? 'is-invalid' : ''" required>
+                        <div class="invalid-feedback" th:errors="*{customerCode}">Error</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="company" class="form-label fw-semibold">Company / Corporation <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="company" th:field="*{company}"
+                               th:classappend="${#fields.hasErrors('company')} ? 'is-invalid' : ''" required>
+                        <div class="invalid-feedback" th:errors="*{company}">Error</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="name" class="form-label fw-semibold">Primary Contact Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" th:field="*{name}"
+                               th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" required>
+                        <div class="invalid-feedback" th:errors="*{name}">Error</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="email" class="form-label fw-semibold">Corporate Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" th:field="*{email}"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''" required>
+                        <div class="invalid-feedback" th:errors="*{email}">Error</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="phone" th:field="*{phone}"
+                               th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''" required>
+                        <div class="invalid-feedback" th:errors="*{phone}">Error</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Account Status</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="active" th:field="*{active}">
+                            <label class="form-check-label" for="active">Active Customer Account</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="address" class="form-label fw-semibold">Billing & Delivery Address</label>
+                        <textarea class="form-control" id="address" th:field="*{address}" rows="3"
+                                  placeholder="Plant location or shipping warehouse"></textarea>
+                    </div>
+
+                    <div class="col-12 mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> Save Customer
+                        </button>
+                        <a th:href="@{/customers}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

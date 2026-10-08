@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Create Manufacturing Order - Smart Manufacturing</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="mb-4">
+        <a th:href="@{/orders}" class="btn btn-sm btn-outline-secondary mb-2">&larr; Back to Orders</a>
+        <h3 class="fw-bold">Create New Manufacturing Order</h3>
+        <p class="text-muted mb-0">Configure manufacturing requirements, priority expediting, line items, and delivery deadlines.</p>
+    </div>
+
+    <form th:action="@{/orders/save}" th:object="${orderDto}" method="post">
+        <div class="row g-4">
+            <!-- Order Header Particulars -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="fw-bold mb-0">Order Particulars</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="customerId" class="form-label fw-semibold">Customer Account <span class="text-danger">*</span></label>
+                            <select class="form-select" id="customerId" th:field="*{customerId}" required>
+                                <option value="">-- Select Client --</option>
+                                <option th:each="c : ${customers}" th:value="${c.id}"
+                                        th:text="${c.customerCode} + ' - ' + ${c.company} + ' (' + ${c.name} + ')'"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deliveryDate" class="form-label fw-semibold">Required Delivery Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="deliveryDate" th:field="*{requiredDeliveryDate}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label fw-semibold">Manufacturing Priority <span class="text-danger">*</span></label>
+                            <select class="form-select" id="priority" th:field="*{priority}">
+                                <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.displayName}"></option>
+                            </select>
+                            <div class="form-text small">
+                                URGENT orders preempt standard machine shifts and receive highest queue weight.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label fw-semibold">Engineering / Assembly Notes</label>
+                            <textarea class="form-control" id="notes" th:field="*{notes}" rows="3"
+                                      placeholder="Special tooling tolerances or delivery notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items Table -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0">Order Line Items (Products & Quantities)</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
+                            <i class="bi bi-plus-lg me-1"></i> Add Product Item
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 55%;">Product Specification</th>
+                                        <th style="width: 25%;">Quantity</th>
+                                        <th style="width: 20%;" class="text-end">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsBody">
+                                    <tr th:each="item, stat : *{items}">
+                                        <td>
+                                            <select class="form-select" th:name="'items[' + ${stat.index} + '].productId'" required>
+                                                <option value="">-- Choose Product --</option>
+                                                <option th:each="p : ${products}" th:value="${p.id}"
+                                                        th:text="${p.productCode} + ' - ' + ${p.name} + ' ($' + ${p.unitPrice} + ')'"
+                                                        th:selected="${item.productId == p.id}"></option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" min="1" class="form-control"
+                                                   th:name="'items[' + ${stat.index} + '].quantity'"
+                                                   th:value="${item.quantity != null ? item.quantity : 1}" required>
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-white p-3 border-top d-flex justify-content-between align-items-center">
+                        <div class="small text-muted">
+                            <i class="bi bi-info-circle me-1"></i> Subtotal, 8% VAT, and Grand Total are verified and calculated on the backend.
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/orders}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check2-circle me-1"></i> Submit Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Template for adding dynamic line rows via JavaScript -->
+    <template id="rowTemplate">
+        <tr>
+            <td>
+                <select class="form-select product-select" required>
+                    <option value="">-- Choose Product --</option>
+                    <option th:each="p : ${products}" th:value="${p.id}"
+                            th:text="${p.productCode} + ' - ' + ${p.name} + ' ($' + ${p.unitPrice} + ')'"></option>
+                </select>
+            </td>
+            <td>
+                <input type="number" min="1" value="1" class="form-control qty-input" required>
+            </td>
+            <td class="text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <script>
+        function reindexRows() {
+            const tbody = document.getElementById('itemsBody');
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row, idx) => {
+                const select = row.querySelector('select');
+                const qty = row.querySelector('input');
+                if (select) select.name = 'items[' + idx + '].productId';
+                if (qty) qty.name = 'items[' + idx + '].quantity';
+            });
+        }
+
+        function addRow() {
+            const template = document.getElementById('rowTemplate');
+            const clone = template.content.cloneNode(true);
+            document.getElementById('itemsBody').appendChild(clone);
+            reindexRows();
+        }
+
+        function removeRow(btn) {
+            const tbody = document.getElementById('itemsBody');
+            if (tbody.querySelectorAll('tr').length <= 1) {
+                alert('An order must contain at least one product item.');
+                return;
+            }
+            btn.closest('tr').remove();
+            reindexRows();
+        }
+    </script>
+
+</div>
+</body>
+</html>

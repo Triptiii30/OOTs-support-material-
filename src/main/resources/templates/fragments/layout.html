@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">Smart Manufacturing System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="brand">
+        <i class="bi bi-cpu-fill text-info fs-4"></i>
+        <div>
+            <div style="font-size: 0.95rem; line-height: 1.1;">SMART MFG</div>
+            <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 400; letter-spacing: 0.05em;">ORDER PROCESSING</div>
+        </div>
+    </div>
+
+    <div class="section-heading">Core Modules</div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/dashboard}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_ORDER_STAFF', 'ROLE_SUPERVISOR')">
+            <a class="nav-link" th:href="@{/customers}">
+                <i class="bi bi-people"></i> Customers
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/products}">
+                <i class="bi bi-box-seam"></i> Products
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_COORDINATOR', 'ROLE_SUPERVISOR')">
+            <a class="nav-link" th:href="@{/inventory}">
+                <i class="bi bi-boxes"></i> Inventory
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_ORDER_STAFF', 'ROLE_PRODUCTION_MANAGER', 'ROLE_SUPERVISOR')">
+            <a class="nav-link" th:href="@{/orders}">
+                <i class="bi bi-cart-check"></i> Orders
+            </a>
+        </li>
+    </ul>
+
+    <div class="section-heading">Manufacturing Operations</div>
+    <ul class="nav flex-column">
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRODUCTION_MANAGER', 'ROLE_SUPERVISOR')">
+            <a class="nav-link" th:href="@{/scheduling}">
+                <i class="bi bi-calendar-range"></i> Production Queue
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_PRODUCTION_MANAGER', 'ROLE_SUPERVISOR')">
+            <a class="nav-link" th:href="@{/production}">
+                <i class="bi bi-gear-wide-connected"></i> Shop Floor Tasks
+            </a>
+        </li>
+    </ul>
+
+    <div class="section-heading">Analytics & Admin</div>
+    <ul class="nav flex-column">
+        <li class="nav-item" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPERVISOR', 'ROLE_PRODUCTION_MANAGER')">
+            <a class="nav-link" th:href="@{/reports}">
+                <i class="bi bi-file-earmark-bar-graph"></i> Reports & Exports
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAuthority('ROLE_ADMIN')">
+            <a class="nav-link" th:href="@{/users}">
+                <i class="bi bi-shield-lock"></i> Users & Security
+            </a>
+        </li>
+    </ul>
+
+    <div style="padding: 1.5rem; margin-top: auto;">
+        <div class="p-2 rounded bg-dark border border-secondary" style="font-size: 0.72rem; color: #94a3b8;">
+            <div class="fw-bold text-white mb-1"><i class="bi bi-mortarboard-fill me-1 text-primary"></i> Capstone PBL (Team 91)</div>
+            <div>Course: CCSE0355 (Java OOP)</div>
+            <div>Target: SDG 9 - Industry 4.0</div>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Wrapper -->
+<div class="main-wrapper">
+    <!-- Top Navbar -->
+    <header class="top-navbar d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0 fw-bold text-secondary">
+                <span class="text-primary">SMART MANUFACTURING</span> ORDER PROCESSING SYSTEM
+            </h5>
+            <small class="text-muted">Enterprise Order Routing & Shop Floor Scheduling</small>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                     style="width: 36px; height: 36px; font-weight: 600;">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size: 0.88rem;" sec:authentication="name">User</div>
+                    <span class="badge bg-secondary" style="font-size: 0.68rem;" sec:authentication="principal.authorities">Roles</span>
+                </div>
+            </div>
+
+            <form th:action="@{/logout}" method="post" class="m-0">
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Log Out">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Alerts Banner -->
+    <div class="px-4 pt-3">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show d-flex align-items-center shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+            <div th:text="${successMessage}">Operation successful!</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <div th:text="${errorMessage}">Error occurred.</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Page Body Content -->
+    <main class="content-body">
+        <div th:replace="${content}">
+            <!-- Page Content Placeholder -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 bg-white border-top text-muted" style="font-size: 0.82rem;">
+        Smart Manufacturing Order Processing System &copy; 2026 &bull; CCSE0355 Object Oriented Techniques using Java &bull; Team 91
+    </footer>
+</div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

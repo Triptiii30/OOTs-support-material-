@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Reports & File Exports - Smart Manufacturing</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Reports & File Handling Exports</h3>
+            <p class="text-muted mb-0">Generate filtered operational reports and stream formatted CSV files via Java I/O.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/reports/orders/export(query=${filter.query}, status=${filter.status}, priority=${filter.priority}, startDate=${filter.startDate}, endDate=${filter.endDate})}"
+               class="btn btn-outline-primary">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Orders CSV
+            </a>
+            <a th:href="@{/reports/inventory/export}" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Inventory CSV
+            </a>
+            <a th:href="@{/reports/production/export}" class="btn btn-outline-warning text-dark">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Tasks CSV
+            </a>
+            <a th:href="@{/reports/customers/export}" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Customers CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <form th:action="@{/reports}" method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted mb-1">Keyword</label>
+                    <input type="text" name="query" th:value="${filter.query}" class="form-control form-control-sm" placeholder="Order, client, SKU...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">-- All Statuses --</option>
+                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.displayName}"
+                                th:selected="${filter.status == st}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Priority</label>
+                    <select name="priority" class="form-select form-select-sm">
+                        <option value="">-- All Priorities --</option>
+                        <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.displayName}"
+                                th:selected="${filter.priority == p}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">From</label>
+                    <input type="date" name="startDate" th:value="${filter.startDate}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">To</label>
+                    <input type="date" name="endDate" th:value="${filter.endDate}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-1 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary btn-sm w-100" title="Apply Filter"><i class="bi bi-funnel"></i></button>
+                    <a th:href="@{/reports}" class="btn btn-outline-secondary btn-sm" title="Clear"><i class="bi bi-x"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nav Tabs for Reports -->
+    <ul class="nav nav-tabs mb-3" id="reportTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-pane" type="button" role="tab">
+                <i class="bi bi-cart3 me-1"></i> Manufacturing Orders (<span th:text="${orders.size()}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="production-tab" data-bs-toggle="tab" data-bs-target="#production-pane" type="button" role="tab">
+                <i class="bi bi-gear-wide-connected me-1"></i> Shop Floor Tasks (<span th:text="${tasks.size()}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-pane" type="button" role="tab">
+                <i class="bi bi-boxes me-1"></i> Warehouse Stock Ledger (<span th:text="${inventories.size()}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-pane" type="button" role="tab">
+                <i class="bi bi-people me-1"></i> Customer Accounts (<span th:text="${customers.size()}">0</span>)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Panes Content -->
+    <div class="tab-content" id="reportTabsContent">
+        <!-- Orders Pane -->
+        <div class="tab-pane fade show active" id="orders-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Client</th>
+                                    <th>Date</th>
+                                    <th>Deadline</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Grand Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="o : ${orders}">
+                                    <td class="fw-bold" th:text="${o.orderNumber}">ORD-001</td>
+                                    <td th:text="${o.customerCompany}">Company</td>
+                                    <td th:text="${o.orderDate}">Date</td>
+                                    <td th:text="${o.requiredDeliveryDate}">Deadline</td>
+                                    <td>
+                                        <span class="badge" th:classappend="'badge-priority-' + ${o.priority}" th:text="${o.priority}">NORMAL</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" th:classappend="'badge-status-' + ${o.status}" th:text="${o.status.displayName}">STATUS</span>
+                                    </td>
+                                    <td class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(o.grandTotal, 1, 2)}">$0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Tasks Pane -->
+        <div class="tab-pane fade" id="production-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Task Code</th>
+                                    <th>Order #</th>
+                                    <th>Product</th>
+                                    <th>Workstation</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="t : ${tasks}">
+                                    <td class="fw-bold" th:text="${t.taskCode}">TSK-1</td>
+                                    <td th:text="${t.order.orderNumber}">ORD-1</td>
+                                    <td th:text="${t.product.name}">Product</td>
+                                    <td th:text="${t.assignedTeam}">CNC</td>
+                                    <td>
+                                        <span class="badge" th:classappend="'badge-priority-' + ${t.priority}" th:text="${t.priority}">NORMAL</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" th:classappend="'badge-status-' + ${t.status}" th:text="${t.status}">STATUS</span>
+                                    </td>
+                                    <td th:text="${t.progressPercentage} + '%'">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Stock Pane -->
+        <div class="tab-pane fade" id="inventory-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>On-Hand Stock</th>
+                                    <th>Allocated</th>
+                                    <th>Available</th>
+                                    <th>Min Safety Level</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="inv : ${inventories}">
+                                    <td class="fw-bold" th:text="${inv.product.productCode}">SKU</td>
+                                    <td th:text="${inv.product.name}">Name</td>
+                                    <td th:text="${inv.product.category}">Cat</td>
+                                    <td class="fw-bold" th:text="${inv.currentStock}">100</td>
+                                    <td class="text-warning" th:text="${inv.allocatedStock}">10</td>
+                                    <td class="text-success fw-bold" th:text="${inv.availableStock}">90</td>
+                                    <td th:text="${inv.minStockLevel}">10</td>
+                                    <td>
+                                        <span th:if="${inv.lowStock}" class="badge bg-danger">LOW STOCK</span>
+                                        <span th:unless="${inv.lowStock}" class="badge bg-success bg-opacity-75">NORMAL</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customers Pane -->
+        <div class="tab-pane fade" id="customers-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Customer Code</th>
+                                    <th>Contact</th>
+                                    <th>Company</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Total Orders</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="c : ${customers}">
+                                    <td class="fw-bold" th:text="${c.customerCode}">CUST-1001</td>
+                                    <td th:text="${c.name}">Name</td>
+                                    <td th:text="${c.company}">Company</td>
+                                    <td th:text="${c.email}">email</td>
+                                    <td th:text="${c.phone}">phone</td>
+                                    <td class="fw-semibold" th:text="${c.orders.size()}">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

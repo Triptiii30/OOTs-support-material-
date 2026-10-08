@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Production Scheduling & Priority Queue - Smart Manufacturing</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Production Scheduling Queue</h3>
+            <p class="text-muted mb-0">Algorithmic order dispatch powered by Java PriorityQueue (DSA) and Polymorphic Priority Strategies.</p>
+        </div>
+        <div>
+            <a th:href="@{/production}" class="btn btn-outline-secondary">
+                <i class="bi bi-list-task me-1"></i> View Shop Floor Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- OOP & DSA Technical Architecture Banner for Academic Evaluation -->
+    <div class="card bg-light border-primary border-opacity-25 mb-4 shadow-sm">
+        <div class="card-body">
+            <h6 class="fw-bold text-primary mb-2">
+                <i class="bi bi-code-square me-1"></i> Academic Concept: Object-Oriented DSA Prioritization Engine
+            </h6>
+            <div class="row g-3 small text-secondary">
+                <div class="col-md-4">
+                    <b>1. Polymorphic Strategy:</b>
+                    <code>PriorityStrategy</code> dynamically resolves weights:
+                    <span class="badge badge-priority-URGENT">URGENT (1000)</span> &gt;
+                    <span class="badge badge-priority-HIGH">HIGH (500)</span> &gt;
+                    <span class="badge badge-priority-NORMAL">NORMAL (100)</span> &gt;
+                    <span class="badge badge-priority-LOW">LOW (10)</span>.
+                </div>
+                <div class="col-md-4">
+                    <b>2. Tie-Breaking Comparator:</b>
+                    <code>OrderSchedulingComparator</code> evaluates earliest <code>requiredDeliveryDate</code> whenever priority scores match.
+                </div>
+                <div class="col-md-4">
+                    <b>3. In-Memory PriorityQueue:</b>
+                    Uses <code>java.util.PriorityQueue</code> binary heap algorithm to dispatch orders into active shop floor shifts.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prioritized Orders Queue Table -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">Prioritized Dispatch Sequence (Next in Line)</h6>
+            <span class="badge bg-primary" th:text="${prioritizedOrders.size()} + ' Orders in Active Queue'">0 Orders</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Queue #</th>
+                            <th>Order #</th>
+                            <th>Client / Corporation</th>
+                            <th>Delivery Deadline</th>
+                            <th>Priority Tier</th>
+                            <th>Status</th>
+                            <th>Total Items</th>
+                            <th>Grand Total</th>
+                            <th class="text-end">Manage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="o, iterStat : ${prioritizedOrders}">
+                            <td class="fw-bold text-primary">
+                                <span class="badge bg-secondary rounded-pill" th:text="'#' + ${iterStat.count}">#1</span>
+                            </td>
+                            <td>
+                                <a th:href="@{'/orders/' + ${o.id}}" class="fw-bold text-decoration-none" th:text="${o.orderNumber}">ORD-1001</a>
+                            </td>
+                            <td>
+                                <span class="fw-semibold" th:text="${o.customerCompany}">Company</span>
+                                <small class="text-muted d-block" th:text="${o.customerName}">Contact</small>
+                            </td>
+                            <td>
+                                <span th:text="${o.requiredDeliveryDate}">2026-10-15</span>
+                                <span th:if="${o.delayed}" class="badge bg-danger ms-1">OVERDUE</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="'badge-priority-' + ${o.priority}" th:text="${o.priority}">NORMAL</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="'badge-status-' + ${o.status}" th:text="${o.status.displayName}">APPROVED</span>
+                            </td>
+                            <td class="text-center" th:text="${o.totalQuantity}">4</td>
+                            <td class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(o.grandTotal, 1, 2)}">$0.00</td>
+                            <td class="text-end">
+                                <a th:href="@{'/orders/' + ${o.id}}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-gear-fill me-1"></i> Order Workflow
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${prioritizedOrders == null or prioritizedOrders.isEmpty()}">
+                            <td colspan="9" class="text-center py-4 text-muted">No pending orders awaiting scheduling in the queue.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Production Schedules Batches -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h6 class="fw-bold mb-0">Production Schedule Batches</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Schedule Code</th>
+                            <th>Schedule Date</th>
+                            <th>Batch Title</th>
+                            <th>Status</th>
+                            <th>Tasks Allocated</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="s : ${schedules}">
+                            <td class="fw-bold" th:text="${s.scheduleCode}">SCHED-001</td>
+                            <td th:text="${s.scheduleDate}">2026-10-08</td>
+                            <td class="fw-semibold" th:text="${s.name}">Shift Schedule</td>
+                            <td>
+                                <span class="badge bg-success" th:text="${s.status}">ACTIVE</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${s.tasks.size()} + ' tasks'">0</span>
+                            </td>
+                            <td class="small text-muted" th:text="${s.notes}">Notes</td>
+                        </tr>
+                        <tr th:if="${schedules == null or schedules.isEmpty()}">
+                            <td colspan="6" class="text-center py-4 text-muted">No schedule batches generated yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
