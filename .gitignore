@@ -17,6 +17,7 @@
 target/
 desktop-client/target/
 test_app.py
+verify_live_system.py
 cookies.txt
 pom.xml.tag
 pom.xml.releaseBackup
