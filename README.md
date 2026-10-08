@@ -438,6 +438,8 @@ This project directly aligns with **United Nations Sustainable Development Goal 
 * **Project Type:** Capstone / PBL Project
 * **Team / Group No:** 91
 * **Degree:** B.Tech Computer Science & Engineering (CSE)
+* **Lead Developer & Contributor:** Udit Pratap Singh ([@uditdev0523](https://github.com/uditdev0523))
+* **Repository Owner:** Tripti Verma ([@Triptiii30](https://github.com/Triptiii30))
 
 ---
 
