@@ -1,0 +1,12 @@
+# Cloudflare Tunnel Configuration Example
+# Place this in ~/.cloudflared/config.yml or mount into cloudflared container
+
+tunnel: YOUR_TUNNEL_ID_OR_NAME
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  # Route traffic for your custom domain to the Spring Boot backend container
+  - hostname: manufacturing.yourdomain.com
+    service: http://app:8081
+  # Catch-all rule (required by Cloudflare)
+  - service: http_status:404
