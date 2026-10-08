@@ -299,13 +299,34 @@ To start both the MySQL 8 database container and the Spring Boot application con
 ```bash
 docker compose up --build
 ```
-* Web Application: `http://localhost:8080`
+* Web Application: `http://localhost:8081`
 * MySQL Database: `localhost:3307` (Credentials: `mfg_user` / `mfg_password`)
 
 To shut down:
 ```bash
 docker compose down -v
 ```
+
+---
+
+### Option D: Cloudflare Tunnel Deployment (Zero Open Ports)
+Expose the application securely behind Cloudflare's global edge network with automatic HTTPS:
+
+1. Add your Tunnel Token from Cloudflare Zero Trust to `.env`:
+   ```bash
+   CLOUDFLARE_TUNNEL_TOKEN=your_token_here
+   ```
+2. Start the stack with the Cloudflare profile:
+   ```bash
+   docker compose --profile cloudflare up -d
+   ```
+3. Or test instantly using Cloudflare Quick Tunnel (no account required):
+   ```bash
+   docker compose up -d
+   docker run --rm -it --network host cloudflare/cloudflared:latest tunnel --url http://localhost:8081
+   ```
+* Detailed guide available at [deploy/README.md](deploy/README.md).
+
 
 ---
 
@@ -361,19 +382,12 @@ Test Results Overview:
 
 ## 13. Project Structure
 
-```
+```text
 smart-manufacturing-order-processing-system/
-├── .github/workflows/maven.yml       # GitHub Actions CI Workflow
-├── database/
-│   ├── schema.sql                   # MySQL 8 Normalized DDL
-│   └── seed.sql                     # Realistic SQL Seed Data
-├── docs/
-│   ├── architecture.md              # Detailed Architectural Blueprint
-│   ├── database-design.md           # ERD & Schema Normalization Specs
-│   └── api-documentation.md         # Full REST API Reference
-├── src/
-│   ├── main/
-│   │   ├── java/com/smart/manufacturing/
+├── .github/workflows/maven.yml       # Multi-module CI/CD Workflow
+├── backend/                          # Spring Boot 3.2.5 Web Application
+│   ├── src/
+│   │   ├── main/java/com/smart/manufacturing/
 │   │   │   ├── SmartManufacturingApplication.java
 │   │   │   ├── config/              # SecurityConfig & DataInitializer
 │   │   │   ├── controller/          # Thymeleaf MVC & REST API Controllers
@@ -383,7 +397,6 @@ smart-manufacturing-order-processing-system/
 │   │   │   ├── exception/           # Custom Exceptions & GlobalExceptionHandler
 │   │   │   ├── repository/          # Spring Data JPA Repositories
 │   │   │   ├── service/             # Abstraction Service Interfaces
-│   │   │   │   └── impl/            # Business Logic Implementations
 │   │   │   ├── strategy/            # Polymorphic Priority Strategy Engine
 │   │   │   └── util/                # CsvExportUtil (Java I/O)
 │   │   └── resources/
@@ -391,18 +404,27 @@ smart-manufacturing-order-processing-system/
 │   │       ├── application-mysql.properties
 │   │       ├── static/css/style.css
 │   │       └── templates/           # Thymeleaf HTML Templates
-│   └── test/java/com/smart/manufacturing/
-│       ├── controller/              # MockMvc Web Tests
-│       ├── integration/             # End-to-End Workflow Tests
-│       ├── service/                 # Business Logic Unit Tests
-│       └── strategy/                # PriorityQueue & Strategy Tests
-├── Dockerfile                       # Multi-stage Container Build
-├── docker-compose.yml               # MySQL 8 & App Orchestration
-├── pom.xml                          # Maven Project Object Model
-├── .env.example                     # Environment Variables Template
+│   ├── test/java/com/smart/manufacturing/
+│   ├── Dockerfile                   # Optimized Backend Multi-Stage Containerfile
+│   ├── pom.xml                      # Backend Maven descriptor
+│   └── .env.example                 # Backend environment template
+├── desktop-client/                   # Production Floor Terminal (Swing Desktop App)
+│   ├── src/                         # Swing UI & desktop code
+│   └── pom.xml                      # Desktop client Maven descriptor
+├── database/
+│   ├── schema.sql                   # MySQL 8 Normalized DDL
+│   └── seed.sql                     # Realistic SQL Seed Data
+├── deploy/                           # Deployment manifests & guides
+│   ├── README.md                    # Comprehensive deployment guide
+│   └── cloudflare/                  # Cloudflare Tunnel configs & Compose setup
+├── Dockerfile                        # Multi-stage Container Build (Root context)
+├── docker-compose.yml                # MySQL 8, Backend & Cloudflare Tunnel
+├── pom.xml                           # Root Maven Aggregator POM
+├── .env.example                      # Centralized Environment Variables Template
 ├── .gitignore
-└── README.md                        # Master Documentation
+└── README.md                         # Master Documentation
 ```
+
 
 ---
 

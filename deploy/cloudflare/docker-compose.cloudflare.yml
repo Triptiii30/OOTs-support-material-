@@ -1,7 +1,7 @@
 version: '3.8'
 
+# Dedicated Docker Compose stack for Cloudflare-fronted deployment
 services:
-  # MySQL 8.0 Database Container
   db:
     image: mysql:8.0
     container_name: smart_mfg_mysql
@@ -11,24 +11,21 @@ services:
       MYSQL_DATABASE: ${DB_NAME:-smart_manufacturing_db}
       MYSQL_USER: ${DB_USER:-mfg_user}
       MYSQL_PASSWORD: ${DB_USER_PASSWORD:-mfg_password}
-    ports:
-      - "${DB_EXTERNAL_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - ../../database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../../database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - smart_mfg_network
+      - smart_mfg_net
 
-  # Spring Boot Application Container
   app:
     build:
-      context: ./backend
+      context: ../../backend
       dockerfile: Dockerfile
     container_name: smart_mfg_app
     restart: always
@@ -43,29 +40,25 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
       SPRING_PROFILES_ACTIVE: mysql
       PORT: 8081
-    ports:
-      - "${PORT:-8081}:8081"
     networks:
-      - smart_mfg_network
+      - smart_mfg_net
 
-  # Cloudflare Tunnel Container (Optional: run with --profile cloudflare)
+  # Cloudflare Tunnel: securely exposes the application without opening router/firewall ports
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: smart_mfg_tunnel
     restart: always
     command: tunnel run
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - app
     networks:
-      - smart_mfg_network
-    profiles:
-      - cloudflare
+      - smart_mfg_net
 
 volumes:
   mysql_data:
 
 networks:
-  smart_mfg_network:
+  smart_mfg_net:
     driver: bridge

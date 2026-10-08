@@ -1,28 +1,28 @@
 # ===================================================================
-# Stage 1: Build backend application with Maven from repo root
+# Stage 1: Build application with Maven
 # ===================================================================
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Cache Maven dependencies using backend pom.xml
-COPY backend/pom.xml ./
+# Cache Maven dependencies
+COPY pom.xml ./
 RUN mvn dependency:go-offline -B || true
 
-# Copy backend source code and build jar
-COPY backend/src ./src
+# Copy source code and package application
+COPY src ./src
 RUN mvn clean package -DskipTests
 
 # ===================================================================
-# Stage 2: Minimal runtime image
+# Stage 2: Minimal, secure runtime image
 # ===================================================================
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
-# Create unprivileged application user
+# Create unprivileged application user for security
 RUN groupadd -r spring && useradd -r -g spring spring
 USER spring:spring
 
-# Copy built artifact from build stage
+# Copy built jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
 # Expose HTTP port
