@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:text="'Order ' + ${order.orderNumber} + ' - Smart Manufacturing'">Order Details</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- Header & Status Pill -->
+    <div class="mb-4">
+        <a th:href="@{/orders}" class="btn btn-sm btn-outline-secondary mb-2">&larr; Back to Order List</a>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h3 class="fw-bold mb-1" th:text="${order.orderNumber}">ORD-1001</h3>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge" th:classappend="'badge-status-' + ${order.status}"
+                          style="font-size: 0.95rem;" th:text="${order.status.displayName}">STATUS</span>
+                    <span class="badge" th:classappend="'badge-priority-' + ${order.priority}"
+                          style="font-size: 0.85rem;" th:text="'Priority: ' + ${order.priority}">NORMAL</span>
+                    <span th:if="${order.delayed}" class="badge bg-danger" style="font-size: 0.85rem;">
+                        <i class="bi bi-clock-history me-1"></i> DELIVERY DELAYED
+                    </span>
+                </div>
+            </div>
+
+            <!-- Action Transition Buttons (State Machine) -->
+            <div class="d-flex flex-wrap gap-2">
+                <!-- Validate (CREATED -> VALIDATED) -->
+                <form th:if="${order.status.name() == 'CREATED'}" th:action="@{'/orders/' + ${order.id} + '/validate'}" method="post">
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-shield-check me-1"></i> Validate Order
+                    </button>
+                </form>
+
+                <!-- Approve (VALIDATED -> APPROVED) -->
+                <form th:if="${order.status.name() == 'VALIDATED'}" th:action="@{'/orders/' + ${order.id} + '/approve'}" method="post">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i> Approve & Allocate Stock
+                    </button>
+                </form>
+
+                <!-- Schedule (APPROVED -> SCHEDULED) -->
+                <form th:if="${order.status.name() == 'APPROVED'}" th:action="@{'/orders/' + ${order.id} + '/schedule'}" method="post">
+                    <button type="submit" class="btn btn-warning text-dark">
+                        <i class="bi bi-calendar-plus me-1"></i> Schedule Production
+                    </button>
+                </form>
+
+                <!-- Start Production (SCHEDULED -> IN_PROGRESS) -->
+                <form th:if="${order.status.name() == 'SCHEDULED'}" th:action="@{'/orders/' + ${order.id} + '/start-production'}" method="post">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-play-circle me-1"></i> Start Manufacturing
+                    </button>
+                </form>
+
+                <!-- Complete (IN_PROGRESS -> COMPLETED) -->
+                <form th:if="${order.status.name() == 'IN_PROGRESS'}" th:action="@{'/orders/' + ${order.id} + '/complete'}" method="post">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-box2-fill me-1"></i> Complete & Fulfill Order
+                    </button>
+                </form>
+
+                <!-- Cancel Order Modal Trigger -->
+                <button th:if="${order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED'}"
+                        type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                    <i class="bi bi-x-circle me-1"></i> Cancel Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Client & Schedule Specs -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0">Order Meta Particulars</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Client Company</small>
+                        <h5 class="fw-bold mb-0" th:text="${order.customerCompany}">Company</h5>
+                        <div class="small text-muted" th:text="${order.customerName}">Contact</div>
+                    </div>
+                    <hr>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Order Placed Date</small>
+                            <span class="fw-semibold" th:text="${order.orderDate}">2026-10-01</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Required Delivery</small>
+                            <span class="fw-bold" th:classappend="${order.delayed ? 'text-danger' : 'text-primary'}"
+                                  th:text="${order.requiredDeliveryDate}">2026-10-15</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Engineering Notes</small>
+                        <p class="small text-secondary mb-0" th:text="${order.notes != null ? order.notes : 'None recorded.'}">Notes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Line Items Breakdown & Billing -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0">Manufactured Product Line Items</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Product Description</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${order.items}">
+                                    <td class="fw-bold" th:text="${item.productCode}">PRD-001</td>
+                                    <td th:text="${item.productName}">Product Name</td>
+                                    <td class="text-center fw-semibold" th:text="${item.quantity}">2</td>
+                                    <td class="text-end" th:text="'$' + ${#numbers.formatDecimal(item.unitPrice, 1, 2)}">$0.00</td>
+                                    <td class="text-end fw-bold" th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}">$0.00</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-light">
+                                <tr>
+                                    <td colspan="4" class="text-end fw-semibold">Subtotal:</td>
+                                    <td class="text-end fw-bold" th:text="'$' + ${#numbers.formatDecimal(order.subtotal, 1, 2)}">$0.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end fw-semibold">Industrial Tax / VAT (8%):</td>
+                                    <td class="text-end fw-bold" th:text="'$' + ${#numbers.formatDecimal(order.taxAmount, 1, 2)}">$0.00</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <td colspan="4" class="text-end fw-bold fs-6">Grand Total:</td>
+                                    <td class="text-end fw-bold fs-6 text-primary" th:text="'$' + ${#numbers.formatDecimal(order.grandTotal, 1, 2)}">$0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Tasks Assigned to this Order -->
+    <div class="card shadow-sm border-0 mb-4" th:if="${rawOrder.tasks != null and not rawOrder.tasks.isEmpty()}">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">Production Floor Tasks</h6>
+            <a th:href="@{/production}" class="btn btn-sm btn-link text-decoration-none">Manage All Tasks &rarr;</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Task Code</th>
+                            <th>Product</th>
+                            <th>Assigned Workstation</th>
+                            <th>Target Window</th>
+                            <th>Status</th>
+                            <th>Completion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="t : ${rawOrder.tasks}">
+                            <td class="fw-bold" th:text="${t.taskCode}">TSK-1</td>
+                            <td th:text="${t.product.name}">Product</td>
+                            <td th:text="${t.assignedTeam}">CNC Cell 1</td>
+                            <td class="small text-muted" th:text="${#temporals.format(t.plannedStartDate, 'yyyy-MM-dd HH:mm')} + ' to ' + ${#temporals.format(t.plannedEndDate, 'yyyy-MM-dd HH:mm')}">Window</td>
+                            <td>
+                                <span class="badge" th:classappend="'badge-status-' + ${t.status}" th:text="${t.status}">PENDING</span>
+                            </td>
+                            <td style="min-width: 140px;">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         th:style="'width: ' + ${t.progressPercentage} + '%;'"
+                                         th:aria-valuenow="${t.progressPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="text-muted" th:text="${t.progressPercentage} + '%'">0%</small>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Lifecycle Status History Timeline -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-1"></i> Order Status Audit Timeline</h6>
+        </div>
+        <div class="card-body p-4">
+            <ul class="timeline mb-0">
+                <li class="timeline-item completed" th:each="h : ${statusHistory}">
+                    <div class="d-flex justify-content-between align-items-baseline">
+                        <span class="badge" th:classappend="'badge-status-' + ${h.newStatus}" th:text="${h.newStatus.displayName}">Status</span>
+                        <small class="text-muted" th:text="${#temporals.format(h.changedAt, 'yyyy-MM-dd HH:mm:ss')}">Timestamp</small>
+                    </div>
+                    <p class="small text-secondary mb-1 mt-1" th:text="${h.comments}">Transition comments</p>
+                    <small class="text-muted">
+                        Changed by: <b th:text="${h.changedBy != null ? h.changedBy.fullName : 'System Automation'}">User</b>
+                    </small>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal for Order Cancellation -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{'/orders/' + ${order.id} + '/cancel'}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-danger">Cancel Manufacturing Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            Cancelling this order will release any reserved inventory stock back into warehouse availability. This action is audited in system history.
+                        </p>
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label fw-semibold">Cancellation Reason</label>
+                            <textarea class="form-control" id="cancelReason" name="reason" rows="3" required
+                                      placeholder="Client cancellation request, specification revision, etc."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

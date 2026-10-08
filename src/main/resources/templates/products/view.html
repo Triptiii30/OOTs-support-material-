@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:text="${product.name} + ' - Product Specs'">Product Specs</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="mb-4">
+        <a th:href="@{/products}" class="btn btn-sm btn-outline-secondary mb-2">&larr; Back to Catalog</a>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold mb-1" th:text="${product.name}">Product Name</h3>
+                <span class="badge bg-primary" th:text="${product.productCode}">SKU-001</span>
+                <span class="badge bg-secondary ms-1" th:text="${product.category}">Category</span>
+            </div>
+            <div>
+                <a th:href="@{'/products/edit/' + ${product.id}}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i> Edit Specifications
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0">Product Specifications</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted" th:text="${product.description}">Technical details</p>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Unit Sale Price</small>
+                            <h4 class="fw-bold text-primary mb-0" th:text="'$' + ${#numbers.formatDecimal(product.unitPrice, 1, 2)}">$0.00</h4>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Manufacturing Duration</small>
+                            <h4 class="fw-bold text-secondary mb-0" th:text="${product.productionDurationHours} + ' Hours'">8 Hours</h4>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Minimum Stock Threshold</small>
+                            <span class="fw-semibold" th:text="${product.minStockLevel} + ' Units'">10 Units</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Product Availability</small>
+                            <span class="badge" th:classappend="${product.active ? 'bg-success' : 'bg-danger'}"
+                                  th:text="${product.active ? 'Active' : 'Inactive'}">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="fw-bold mb-0">Inventory & Stock Tracking</h6>
+                </div>
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem;">Physical On-Hand Stock</small>
+                        <h2 class="fw-bold display-5" th:text="${product.currentStock}">50</h2>
+                    </div>
+
+                    <div class="row g-2 pt-3 border-top text-start">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Allocated for Orders</small>
+                            <span class="fw-bold text-warning" th:text="${product.allocatedStock}">10</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Available to Promise</small>
+                            <span class="fw-bold text-success" th:text="${product.availableStock}">40</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div th:if="${product.lowStock}" class="alert alert-danger py-2 small mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Stock below safety threshold!
+                        </div>
+                        <div th:unless="${product.lowStock}" class="alert alert-success py-2 small mb-0">
+                            <i class="bi bi-check-circle-fill me-1"></i> Stock within optimal threshold.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
